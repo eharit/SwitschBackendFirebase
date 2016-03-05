@@ -1,0 +1,186 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta lang="en">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+</head>
+
+<body>
+
+    <div id="main.content" class="container">
+
+        <div class="row">
+
+            <h3 id="h2-display">Press Switsch</h3>
+
+            <p>
+                <button id="toggle-timer-button" class="btn btn-primary" disabled="true">Switsch Timer</button>
+            </p>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-6">
+                <h4>Timer0</h4>
+                <ul id="time-1"></ul>
+            </div>
+            <div class="col-sm-6">
+                <h4>Timer1</h4>
+                <ul id="time-2"></ul>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src='https://cdn.firebase.com/js/client/2.2.1/firebase.js'></script>
+
+    <script>
+        'use strict'
+
+        // Firebase connection
+        var fbRef = new Firebase('https://crackling-inferno-3492.firebaseio.com/');
+
+        // DOM elements
+        var toggleTimerButton = document.getElementById("toggle-timer-button");
+        var liDisplays = [document.getElementById("time-1"), document.getElementById("time-2")];
+        var h2Display = document.getElementById("h2-display");
+
+        // variables
+        var timers = [];
+        var timersCount = 2;
+
+        // Project object
+        var Project = function(name) {
+            this.name = name;
+            this.timestamps = {};
+            this.activeTimer = 0;
+            this.lastTimer = 1;
+            this.timestampCount = 0;
+        };
+
+        // Timer object
+        var Timer = function(name) {
+            this.name = name;
+            this.timestamps = [];
+        }
+
+        Timer.prototype.addTimestamp = function() {
+            this.timestamps.unshift(new Date());
+        }
+
+        var Timestamp = function(timer, date) {
+            this.date = date.getTime();
+            this.timer = timer.name;
+        }
+
+        // create project
+        // project = new Project("MyProject");
+
+        fbRef.once("value", function(data) {
+            var project = data.val();
+            console.log("Project loaded!", Object.keys(data.val()).length);
+            // init app
+            enableToggleButton(project);
+        });
+
+        //create timers
+        for (var i = 0; i < timersCount; i++) {
+            timers.push(new Timer("timer" + [i]));
+        };
+
+        function enableToggleButton(project) {
+
+            toggleTimerButton.disabled = false;
+
+            toggleTimerButton.addEventListener('click', function() {
+
+                var activeTimerNum = project.activeTimer;
+                var lastTimerNum = project.lastTimer;
+                var activeTimer = timers[activeTimerNum];
+                var lastTimer = timers[lastTimerNum];
+
+                // add new date to the timer's date list
+                activeTimer.addTimestamp();
+
+                // add list of timestamps to project
+                var newTimestamp = new Timestamp(activeTimer, (activeTimer.timestamps[0] > 0) ? activeTimer.timestamps[0] : new Date());
+                project.timestamps[project.timestampCount] = newTimestamp;
+                project.timestampCount++;
+
+                // sync object with Firebase db
+                fbRef.set(project);
+
+                // switch timers
+                project.lastTimer = activeTimerNum;
+                project.activeTimer = (activeTimerNum === 0) ? 1 : 0;
+
+                // ---------------------------------------------- ouput  --------------------------------------------------
+
+                // calculate elapsed time
+                var startTime = (timers[lastTimerNum].timestamps[0]) ? timers[lastTimerNum].timestamps[0] : 0;
+                var endTime = (timers[activeTimerNum].timestamps[0]) ? timers[activeTimerNum].timestamps[0] : 0;
+                var timeElapsed = getDuration(endTime - startTime);
+
+                var dateOutput = [];
+                var l = activeTimer.timestamps.length;
+                for (var i = 0; i < l; i++) {
+                    var niceDate = convertDate(activeTimer.timestamps[i]);
+                    dateOutput.push(niceDate);
+                }
+
+                // time entry list
+                liDisplays[activeTimerNum].innerHTML = '<li>' + dateOutput.join('</li><li>') + '</li>';
+
+                // time elapsed
+                h2Display.innerHTML = lastTimer.name + ': ' + timeElapsed;
+
+                // log
+                // console.log(convertDate(project.timers[activeTimer][project.timers[activeTimer].length - 1]), activeTimer.name, lastTimer.name);
+                // console.log(timers, lastTimer.name, startTime, activeTimer.name, endTime);
+                // object to save
+
+                // console.log(project);
+            });
+        }
+
+
+
+        // helper to convert dates
+        function convertDate(d) {
+            if (d) {
+                var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                var days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+                var year = d.getFullYear();
+                var month = months[d.getMonth()];
+                var day = days[d.getDay()];
+                var hour = d.getHours();
+                var min = d.getMinutes();
+                var sec = d.getSeconds();
+                if (min < 10) min = "0" + min;
+                if (sec < 10) sec = "0" + sec;
+                //            return day + ' ' + hour + ':' + min + ':' + sec;
+                return hour + ':' + min + ':' + sec;
+            } else {
+                return "0";
+            }
+        };
+
+        //format duration from http://stackoverflow.com/questions/175554/how-to-convert-milliseconds-into-human-readable-form
+        function getDuration(ms) {
+            var dur = "";
+            var seconds = Math.floor((ms / 1000) % 60);
+            var minutes = Math.floor((ms / (1000 * 60)) % 60);
+            var hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
+            var durh = (hours > 0) ? hours + "h " : "";
+            var durm = (minutes > 0) ? ((minutes < 10) ? "0" + minutes : minutes) + "min " : "";
+            var durs = (seconds > 0) ? ((seconds < 10) ? "0" + seconds : seconds) + "sec" : "";
+            return durh + durm + durs;
+        };
+
+    </script>
+
+</body>
+
+</html>
