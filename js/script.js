@@ -1,6 +1,6 @@
 (function () {
     'use strict'
-    
+
     // Firebase connection
     var fbRef = new Firebase('https://crackling-inferno-3492.firebaseio.com/');
 
@@ -11,18 +11,6 @@
 
     // variables
     var project = {};
-
-    fbRef.once("value", function (data) {
-        if (data.val()) {
-            project = new Project(data.val());
-            console.log("Project loaded!");
-        } else {
-            console.log("Project not found, initialized a new project!");
-            project = new Project("myProject");
-        }
-        // init app
-        init();
-    })
 
     // Timestamp fc
     var Timestamp = function (timer, date) {
@@ -98,25 +86,51 @@
                     tmpArr.unshift(timestamps[ts].date);
                 }
             }
-            console.log(tmpArr);
+            tmpArr.reverse();
+            var l = tmpArr.length;
+            var sum = 0;
+            for (var i = 0; i < l; i++) {
+                if (i % 2 != 0) {
+                    var dur = tmpArr[i] - tmpArr[i - 1];
+                    sum += dur;
+                }
+            }
+            arr.push(sum);
         }
         return arr;
     }
 
+    fbRef.once("value", function (data) {
+        if (data.val()) {
+            project = new Project(data.val());
+            console.log("Project loaded!");
+        } else {
+            console.log("Project not found, initialized a new project!");
+            project = new Project("myProject");
+        }
+        // init app
+        init();
+    })
+
     function init() {
 
         // add click event listener to button
-        toggleTimerButton.addEventListener('click', switsch);
+        toggleTimerButton.addEventListener('click', toggelButtonListener);
 
         // enable button
         toggleTimerButton.disabled = false;
     }
 
-    function switsch() {
+    function toggelButtonListener() {
+
         var timestampsByTimers = project.getTimestamps();
+        var sums = project.getSums();
+        console.log(getDuration(sums[0]), getDuration(sums[1]));
+
         project.addTimestamp();
         project.toggleTimers();
-        project.getSums();
+
+        // save to db
         fbRef.child("/timestamps/").set(project.timestamps);
         fbRef.child("/activeTimer/").set(project.activeTimer);
     }
@@ -201,7 +215,6 @@
 
     //format duration from http://stackoverflow.com/questions/175554/how-to-convert-milliseconds-into-human-readable-form
     function getDuration(ms) {
-        var dur = "";
         var seconds = Math.floor((ms / 1000) % 60);
         var minutes = Math.floor((ms / (1000 * 60)) % 60);
         var hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
