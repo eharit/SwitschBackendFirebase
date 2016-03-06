@@ -50,6 +50,7 @@
         // variables
         var timers = [];
         var timersCount = 2;
+        var project = {};
 
         // Project object
         var Project = function(name) {
@@ -59,9 +60,10 @@
             this.lastTimer = 1;
             this.timestampCount = 0;
         };
-        
+
         Project.prototype.addTimestamp = function() {
-            this.timestamps.unshift(new Date());
+            // add a new Date()
+            // add the current timer
         }
 
         // Timer object
@@ -71,8 +73,7 @@
         }
 
         Timer.prototype.addTimestamp = function(timer) {
-            // add a new Date()
-            // add the current timer
+            this.timestamps.unshift(new Date());
         }
 
         var Timestamp = function(timer, date) {
@@ -81,21 +82,35 @@
         }
 
         // create project
-        // project = new Project("MyProject");
+        project = new Project("MyProject");
 
         fbRef.once("value", function(data) {
             var project = data.val();
             console.log("Project loaded!", Object.keys(data.val()).length);
             // init app
-            enableToggleButton(project);
+            init(project);
         });
 
-        //create timers
-        for (var i = 0; i < timersCount; i++) {
-            timers.push(new Timer("timer" + [i]));
-        };
 
-        function enableToggleButton(project) {
+
+        function init(project) {
+
+            //create timers and init data
+            for (var i = 0; i < timersCount; i++) {
+
+                var prjTimestamps = project.timestamps;
+
+                timers.push(new Timer("timer" + [i]));
+
+                for (var ts in prjTimestamps) {
+                    console.log(timers[i].name, prjTimestamps[ts].timer);
+                    if (timers[i].name == prjTimestamps[ts].timer) {
+                       timers[i].timestamps.push(new Date(prjTimestamps[ts].date)); 
+                    }     
+                }
+
+                console.log(timers[i]);
+            };
 
             toggleTimerButton.disabled = false;
 
@@ -136,7 +151,7 @@
                 }
 
                 // time entry list
-                liDisplays[activeTimerNum].innerHTML = '<li>' + dateOutput.join('</li><li>') + '</li>';
+                displayTimeList(dateOutput, activeTimerNum);
 
                 // time elapsed
                 h2Display.innerHTML = lastTimer.name + ': ' + timeElapsed;
@@ -152,7 +167,12 @@
 
 
 
-        // helper to convert dates
+        // helpers
+
+        function displayTimeList(arr, timer) {
+            liDisplays[timer].innerHTML = '<li>' + arr.join('</li><li>') + '</li>';
+        }
+
         function convertDate(d) {
             if (d) {
                 var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -166,7 +186,7 @@
                 if (min < 10) min = "0" + min;
                 if (sec < 10) sec = "0" + sec;
                 //            return day + ' ' + hour + ':' + min + ':' + sec;
-                return hour + ':' + min + ':' + sec;
+                return day + ", " + hour + ':' + min + ':' + sec;
             } else {
                 return "0";
             }
