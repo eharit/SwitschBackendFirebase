@@ -4,12 +4,12 @@
 <head>
     <meta charset="utf-8">
     <meta lang="en">
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" />
 </head>
 
 <body>
 
-    <div id="main.content" class="container">
+    <div id="main-content" class="container">
 
         <div class="row">
 
@@ -59,6 +59,10 @@
             this.lastTimer = 1;
             this.timestampCount = 0;
         };
+        
+        Project.prototype.addTimestamp = function() {
+            this.timestamps.unshift(new Date());
+        }
 
         // Timer object
         var Timer = function(name) {
@@ -66,8 +70,9 @@
             this.timestamps = [];
         }
 
-        Timer.prototype.addTimestamp = function() {
-            this.timestamps.unshift(new Date());
+        Timer.prototype.addTimestamp = function(timer) {
+            // add a new Date()
+            // add the current timer
         }
 
         var Timestamp = function(timer, date) {
