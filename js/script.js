@@ -1,31 +1,56 @@
 (function () {
     'use strict'
+    
+    // Firebase connection
+    var fbRef = new Firebase('https://crackling-inferno-3492.firebaseio.com/');
 
-    // Project object
+    // DOM elements
+    var toggleTimerButton = document.getElementById("toggle-timer-button");
+    var liDisplays = [document.getElementById("time-1"), document.getElementById("time-2")];
+    var h2Display = document.getElementById("h2-display");
+
+    // variables
+    var project = {};
+
+    fbRef.once("value", function (data) {
+        if (data.val()) {
+            project = new Project(data.val());
+            console.log("Project loaded!");
+        } else {
+            console.log("Project not found, initialized a new project!");
+            project = new Project("myProject");
+        }
+        // init app
+        init();
+    })
+
+    // Timestamp fc
+    var Timestamp = function (timer, date) {
+        this.date = date.getTime();
+        this.timer = timer;
+    }
+
+    // Project fc
     var Project = function (obj) {
-        this.id = obj.id || null;
-        this.name = obj.name || "New project";
-        this.timestamps = obj.timestamps || {};
-        this.activeTimer = obj.activeTimer || 0;
-        this.lastTimer = obj.lasttimer || 1;
-        this.timers = obj.timers || {
-            0: "timer0",
-            1: "timer1"
+        this.id = obj.id || null; // number
+        this.name = obj.name || "New project"; // string
+        this.timestamps = obj.timestamps || {}; // object
+        this.activeTimer = obj.activeTimer || 0; // number
+        this.timers = obj.timers || { // object
+            0: "timer0", // object
+            1: "timer1" // object
         }
     }
 
     Project.prototype.addTimestamp = function () { // void
+        var timerStr = "timer";
         var activeTimer = timerStr + this.activeTimer;
         var newTimestamp = new Timestamp(activeTimer, (this.timestamps[0] > 0) ? this.timestamps[0] : new Date());
         this.timestamps[Object.keys(this.timestamps).length] = newTimestamp;
-        console.log(this)
     }
 
-    Project.prototype.switchTimers = function () { // void
-        var activeTimerNum = this.activeTimer;
-        var lastTimerNum = this.lastTimer;
-        this.activeTimer = lastTimerNum;
-        this.lastTimer = activeTimerNum;
+    Project.prototype.toggleTimers = function () { // void
+        this.activeTimer = Number(!this.activeTimer);
     }
 
     Project.prototype.getActiveTimer = function () { // number
@@ -59,38 +84,26 @@
         return arr;
     }
 
-    // Firebase connection
-    var fbRef = new Firebase('https://crackling-inferno-3492.firebaseio.com/');
-
-    // DOM elements
-    var toggleTimerButton = document.getElementById("toggle-timer-button");
-    var liDisplays = [document.getElementById("time-1"), document.getElementById("time-2")];
-    var h2Display = document.getElementById("h2-display");
-
-    // variables
-    var timers = [];
-    var timersCount = 2;
-    var project = {};
-    var timerStr = "timer";
-
-    var Timestamp = function (timer, date) {
-        this.date = date.getTime();
-        this.timer = timer;
+    Project.prototype.getSums = function () { // array of sums
+        var arr = [];
+        var tmpArr = [];
+        var activeTimer = this.activeTimer;
+        var lastTimer = this.lastTimer;
+        var timestamps = this.timestamps;
+        var timers = this.timers;
+        for (var tm in timers) {
+            tmpArr = [];
+            for (var ts in timestamps) {
+                if (timers[tm] == timestamps[ts].timer) {
+                    tmpArr.unshift(timestamps[ts].date);
+                }
+            }
+            console.log(tmpArr);
+        }
+        return arr;
     }
 
-    fbRef.once("value", function (data) {
-        if (data.val()) {
-            project = new Project(data.val());
-            console.log("Project loaded!");
-        } else {
-            console.log("Project not found, initialized a new project!");
-            project = new Project("myProject");
-        }
-        // init app
-        init(project);
-    })
-
-    function init(project) {
+    function init() {
 
         // add click event listener to button
         toggleTimerButton.addEventListener('click', switsch);
@@ -102,11 +115,11 @@
     function switsch() {
         var timestampsByTimers = project.getTimestamps();
         project.addTimestamp();
-        project.switchTimers();
+        project.toggleTimers();
+        project.getSums();
         fbRef.child("/timestamps/").set(project.timestamps);
+        fbRef.child("/activeTimer/").set(project.activeTimer);
     }
-
-
 
     // the rest of the program shuould be refactored to display data
 
