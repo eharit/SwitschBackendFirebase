@@ -58,7 +58,6 @@
             this.timestamps = {};
             this.activeTimer = 0;
             this.lastTimer = 1;
-            this.timestampCount = 0;
         };
 
         Project.prototype.addTimestamp = function() {
@@ -81,12 +80,14 @@
             this.timer = timer.name;
         }
 
-        // create project
-        project = new Project("MyProject");
 
         fbRef.once("value", function(data) {
-            var project = data.val();
-            console.log("Project loaded!", Object.keys(data.val()).length);
+            if (data.val()) {
+                project = data.val();
+                console.log("Project loaded!");
+            } else {
+                project = new Project("myProject");
+            }
             // init app
             init(project);
         });
@@ -105,8 +106,8 @@
                 for (var ts in prjTimestamps) {
                     console.log(timers[i].name, prjTimestamps[ts].timer);
                     if (timers[i].name == prjTimestamps[ts].timer) {
-                       timers[i].timestamps.push(new Date(prjTimestamps[ts].date)); 
-                    }     
+                        timers[i].timestamps.unshift(new Date(prjTimestamps[ts].date));
+                    }
                 }
 
                 console.log(timers[i]);
@@ -126,8 +127,7 @@
 
                 // add list of timestamps to project
                 var newTimestamp = new Timestamp(activeTimer, (activeTimer.timestamps[0] > 0) ? activeTimer.timestamps[0] : new Date());
-                project.timestamps[project.timestampCount] = newTimestamp;
-                project.timestampCount++;
+                project.timestamps[project.timestamps.length] = newTimestamp;
 
                 // sync object with Firebase db
                 fbRef.set(project);
