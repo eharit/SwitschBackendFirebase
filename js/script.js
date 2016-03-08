@@ -73,17 +73,19 @@
     }
 
     Project.prototype.getSums = function () { // array of sums
-//        var arr = [];
-//        var tmpArr0 = [];
-//        var tmpArr1 = [];
+        //        var arr = [];
+        //        var tmpArr0 = [];
+        //        var tmpArr1 = [];
         var timestamps = this.timestamps;
         var startDate = timestamps["0"];
-        var dur0 = 0, dur1 = 0, endDate = 0;
+        var dur0 = 0,
+            dur1 = 0,
+            endDate = 0;
 
         for (var ts in timestamps) {
             var dur = 0;
             var timer = timestamps[ts].timer;
-            
+
             if (ts != "0") {
                 endDate = timestamps[ts].date;
                 dur = endDate - startDate;
@@ -96,7 +98,7 @@
             startDate = endDate;
             if (timer == "timer0") {
                 dur0 += dur;
-                
+
             } else {
                 dur1 += dur;
             }
@@ -118,6 +120,10 @@
     })
 
     function init() {
+        
+        // get timelists and elapsed times
+        displaySums(project.getSums());
+        displayTimeList(project.getTimestamps());
 
         // add click event listener to button
         toggleTimerButton.addEventListener('click', toggelButtonListener);
@@ -129,13 +135,13 @@
     function toggelButtonListener() {
 
         var timestampsByTimers = project.getTimestamps(); // a list of all timestamps
-        var sums; // an array of the total times elapsed of each timers
 
         project.addTimestamp();
         project.toggleTimers();
 
-        sums = project.getSums();
-        console.log(getDuration(sums[0]) + " // " + getDuration(sums[1]));
+        // display
+        displaySums(project.getSums());
+        displayTimeList(project.getTimestamps());
 
         // save to db
         fbRef.child("/timestamps/").set(project.timestamps);
@@ -146,44 +152,7 @@
 
     function oldSwitsch() {
 
-        var activeTimerNum = project.activeTimer;
-        var lastTimerNum = project.lastTimer;
-        var activeTimer = timers[activeTimerNum];
-        var lastTimer = timers[lastTimerNum];
-
-        // add new date to the timer's date list
-        activeTimer.addTimestamp();
-
-        // add list of timestamps to project
-        var newTimestamp = new Timestamp(activeTimer, (activeTimer.timestamps[0] > 0) ? activeTimer.timestamps[0] : new Date());
-        project.timestamps[project.timestamps.length] = newTimestamp;
-
-        // sync object with Firebase db
-
-
-        // switch timers
-        project.lastTimer = activeTimerNum;
-        project.activeTimer = (activeTimerNum === 0) ? 1 : 0;
-
         // ---------------------------------------------- ouput  --------------------------------------------------
-
-        // calculate elapsed time
-        var startTime = (timers[lastTimerNum].timestamps[0]) ? timers[lastTimerNum].timestamps[0] : 0;
-        var endTime = (timers[activeTimerNum].timestamps[0]) ? timers[activeTimerNum].timestamps[0] : 0;
-        var timeElapsed = getDuration(endTime - startTime);
-
-        var dateOutput = [];
-        var l = activeTimer.timestamps.length;
-        for (var i = 0; i < l; i++) {
-            var niceDate = convertDate(activeTimer.timestamps[i]);
-            dateOutput.push(niceDate);
-        }
-
-        // time entry list
-        displayTimeList(dateOutput, activeTimerNum);
-
-        // time elapsed
-        h2Display.innerHTML = lastTimer.name + ': ' + timeElapsed;
 
         // log
         // console.log(convertDate(project.timers[activeTimer][project.timers[activeTimer].length - 1]), activeTimer.name, lastTimer.name);
@@ -195,11 +164,24 @@
 
     // display functions
 
-    function displayTimeList(arr, timerNum) {
-        liDisplays[timerNum].innerHTML = '<li>' + arr.join('</li><li>') + '</li>';
+    function displayTimeList(arr) {
+        var listHTML;
+        var l = arr.length;
+        for (var i = 0; i < l; i++) {
+            listHTML = "";
+            //console.log(arr[i]);
+            for (var j = 0; j < arr[i].length; j++) {
+                listHTML += "<li>" + convertDate(new Date(arr[i][j])) +"</li>"; 
+            }
+            liDisplays[i].innerHTML = listHTML;
+        }
     }
 
     // helper functions
+
+    function displaySums(sums) {
+        h2Display.innerHTML = getDuration(sums[0]) + " // " + getDuration(sums[1]);
+    }
 
     function convertDate(d) {
         if (d) {
