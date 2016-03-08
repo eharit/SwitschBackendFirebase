@@ -73,31 +73,36 @@
     }
 
     Project.prototype.getSums = function () { // array of sums
-        var arr = [];
-        var tmpArr = [];
-        var activeTimer = this.activeTimer;
-        var lastTimer = this.lastTimer;
+//        var arr = [];
+//        var tmpArr0 = [];
+//        var tmpArr1 = [];
         var timestamps = this.timestamps;
-        var timers = this.timers;
-        for (var tm in timers) {
-            tmpArr = [];
-            for (var ts in timestamps) {
-                if (timers[tm] == timestamps[ts].timer) {
-                    tmpArr.unshift(timestamps[ts].date);
-                }
+        var startDate = timestamps["0"];
+        var dur0 = 0, dur1 = 0, endDate = 0;
+
+        for (var ts in timestamps) {
+            var dur = 0;
+            var timer = timestamps[ts].timer;
+            
+            if (ts != "0") {
+                endDate = timestamps[ts].date;
+                dur = endDate - startDate;
+                //console.log(dur);
+            } else {
+                endDate = timestamps["0"].date;
+                dur = 0;
+                //console.log(dur);
             }
-            tmpArr.reverse();
-            var l = tmpArr.length;
-            var sum = 0;
-            for (var i = 0; i < l; i++) {
-                if (i % 2 != 0) {
-                    var dur = tmpArr[i] - tmpArr[i - 1];
-                    sum += dur;
-                }
+            startDate = endDate;
+            if (timer == "timer0") {
+                dur0 += dur;
+                
+            } else {
+                dur1 += dur;
             }
-            arr.push(sum);
+            //console.log(dur0, dur1)
         }
-        return arr;
+        return [dur0, dur1];
     }
 
     fbRef.once("value", function (data) {
@@ -123,12 +128,14 @@
 
     function toggelButtonListener() {
 
-        var timestampsByTimers = project.getTimestamps();
-        var sums = project.getSums();
-        console.log(getDuration(sums[0]), getDuration(sums[1]));
+        var timestampsByTimers = project.getTimestamps(); // a list of all timestamps
+        var sums; // an array of the total times elapsed of each timers
 
         project.addTimestamp();
         project.toggleTimers();
+
+        sums = project.getSums();
+        console.log(getDuration(sums[0]) + " // " + getDuration(sums[1]));
 
         // save to db
         fbRef.child("/timestamps/").set(project.timestamps);
