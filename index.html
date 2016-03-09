@@ -12,26 +12,24 @@
 
     <div id="main-content" class="container">
 
-        <div class="row">
-
-            <h3 id="h2-display">Press Switsch</h3>
-
-            <p>
-                <button id="toggle-timer-button" class="btn btn-primary" disabled="true">Switsch Timer</button>
-            </p>
-        </div>
+        <header class="row">
+            <div class="col-md-12">
+                <h1>
+                    Switsch
+                    <button id="toggle-timer-button" class="btn btn-success pull-right" disabled="true">
+                        Toggle Timers
+                    </button>
+                </h1>
+            </div>
+        </header>
 
         <div class="row">
             <div class="col-sm-6">
-<!--
-                <h4 contenteditable="true">Timer0</h4>
-                <ul id="time-1"></ul>
--->
                 <div class="panel panel-default">
                     <!-- Default panel contents -->
                     <div class="panel-heading" contenteditable="true">Timer0</div>
                     <div class="panel-body">
-                        <p contenteditable="true">A list of the timer's time entries</p>
+                        <h3 id="sum-0-display">...</h3>
                     </div>
 
                     <!-- Table -->
@@ -45,17 +43,13 @@
                     <!-- Default panel contents -->
                     <div class="panel-heading" contenteditable="true">Timer1</div>
                     <div class="panel-body">
-                        <p contenteditable="true">A list of the timer's time entries</p>
+                        <h3 id="sum-1-display">...</h3>
                     </div>
 
                     <!-- Table -->
                     <table class="table table-striped" id="time-1">
                     </table>
                 </div>
-<!--
-                <h4 contenteditable="true">Timer1</h4>
-                <ul id="time-2"></ul>
--->
             </div>
 
         </div>

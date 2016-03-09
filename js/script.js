@@ -7,7 +7,7 @@
     // DOM elements
     var toggleTimerButton = document.getElementById("toggle-timer-button");
     var liDisplays = [document.getElementById("time-0"), document.getElementById("time-1")];
-    var h2Display = document.getElementById("h2-display");
+    var sumDisplays = [document.getElementById("sum-0-display"), document.getElementById("sum-1-display")];
 
     // variables
     var project = {};
@@ -120,7 +120,7 @@
     })
 
     function init() {
-        
+
         // get timelists and elapsed times
         displaySums(project.getSums());
         displayTimeList(project.getTimestamps());
@@ -150,18 +150,6 @@
 
     // the rest of the program shuould be refactored to display data
 
-    function oldSwitsch() {
-
-        // ---------------------------------------------- ouput  --------------------------------------------------
-
-        // log
-        // console.log(convertDate(project.timers[activeTimer][project.timers[activeTimer].length - 1]), activeTimer.name, lastTimer.name);
-        // console.log(timers, lastTimer.name, startTime, activeTimer.name, endTime);
-        // object to save
-
-        // console.log(project);
-    }
-
     // display functions
 
     function displayTimeList(arr) {
@@ -170,21 +158,22 @@
         for (var i = 0; i < l; i++) {
             listHTML = "";
             //console.log(arr[i]);
-            
+
             for (var j = 0; j < arr[i].length; j++) {
                 listHTML += "<tr>"
-                listHTML += "<td>" + convertDate(new Date(arr[i][j])) +"</td>";
+                listHTML += "<td>" + convertDate(new Date(arr[i][j])) + "</td>";
                 listHTML += "</tr>"
             }
-            
+
             liDisplays[i].innerHTML = listHTML;
         }
     }
 
     // helper functions
 
-    function displaySums(sums) {
-        h2Display.innerHTML = getDuration(sums[0]) + " // " + getDuration(sums[1]);
+     function displaySums(sums) {
+        sumDisplays[0].innerHTML = getDuration(sums[0]);
+        sumDisplays[1].innerHTML = getDuration(sums[1]);
     }
 
     function convertDate(d) {
