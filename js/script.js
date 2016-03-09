@@ -6,7 +6,7 @@
 
     // DOM elements
     var toggleTimerButton = document.getElementById("toggle-timer-button");
-    var liDisplays = [document.getElementById("time-1"), document.getElementById("time-2")];
+    var liDisplays = [document.getElementById("time-0"), document.getElementById("time-1")];
     var h2Display = document.getElementById("h2-display");
 
     // variables
@@ -170,9 +170,13 @@
         for (var i = 0; i < l; i++) {
             listHTML = "";
             //console.log(arr[i]);
+            
             for (var j = 0; j < arr[i].length; j++) {
-                listHTML += "<li>" + convertDate(new Date(arr[i][j])) +"</li>"; 
+                listHTML += "<tr>"
+                listHTML += "<td>" + convertDate(new Date(arr[i][j])) +"</td>";
+                listHTML += "</tr>"
             }
+            
             liDisplays[i].innerHTML = listHTML;
         }
     }

@@ -1,7 +1,7 @@
-ul li:first-child {
+.panel table tr:first-child {
     color: steelblue;
 }
 
-ul li {
+.panel table {
     color: lightsteelblue;
 }
