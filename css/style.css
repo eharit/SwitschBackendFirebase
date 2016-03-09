@@ -1,0 +1,7 @@
+ul li:first-child {
+    color: steelblue;
+}
+
+ul li {
+    color: lightsteelblue;
+}
