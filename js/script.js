@@ -4,9 +4,6 @@
     // Firebase connection
     var fbRef = new Firebase('https://crackling-inferno-3492.firebaseio.com/');
 
-    // DOM elements => interfaces
-
-
     // Interfaces fc
     var Interfaces = function () {
         //buttons, displays
@@ -17,8 +14,8 @@
 
     Interfaces.prototype.displaySums = function (arr) {
         // add from code
-        this.sumDisplays[0].innerHTML = getDuration(arr[0]);
-        this.sumDisplays[1].innerHTML = getDuration(arr[1]);
+        this.sumDisplays[0].innerHTML = this.getDuration(arr[0]);
+        this.sumDisplays[1].innerHTML = this.getDuration(arr[1]);
     }
 
     Interfaces.prototype.displayTimeList = function (arr) {
@@ -29,11 +26,42 @@
             listHTML = "";
             for (var j = 0; j < arr[i].length; j++) {
                 listHTML += "<tr>"
-                listHTML += "<td>" + convertDate(new Date(arr[i][j])) + "</td>";
+                listHTML += "<td>" + this.convertDate(new Date(arr[i][j])) + "</td>";
                 listHTML += "</tr>"
             }
             this.liDisplays[i].innerHTML = listHTML;
         }
+    }
+
+    Interfaces.prototype.convertDate = function (d) {
+        if (d) {
+            var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            var days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+            var year = d.getFullYear();
+            var month = months[d.getMonth()];
+            var day = days[d.getDay()];
+            var hour = d.getHours();
+            var min = d.getMinutes();
+            var sec = d.getSeconds();
+            if (min < 10) min = "0" + min;
+            if (sec < 10) sec = "0" + sec;
+            //            return day + ' ' + hour + ':' + min + ':' + sec;
+            return day + ", " + hour + ':' + min + ':' + sec;
+        } else {
+            return "0";
+        }
+    }
+
+    Interfaces.prototype.getDuration = function (ms) {
+        var seconds = Math.floor((ms / 1000) % 60);
+        var minutes = Math.floor((ms / (1000 * 60)) % 60);
+        var hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
+        var days = Math.floor((ms / (1000 * 60 * 60 * 24)) % 7);
+        var durd = (days > 0) ? days + "d " : "";
+        var durh = (hours > 0) ? hours + "h " : "";
+        var durm = (minutes > 0) ? ((minutes < 10) ? "0" + minutes : minutes) + "min " : "";
+        var durs = (seconds > 0) ? ((seconds < 10) ? "0" + seconds : seconds) + "sec" : "";
+        return durd + durh + durm + durs;
     }
 
 
@@ -45,10 +73,24 @@
         this.timer;
     }
 
+    App.prototype.toggleButton = function () {
+        this.project.addTimestamp();
+        this.project.toggleTimers();
+        // print times
+        this.interfaces.displaySums(this.project.getSums());
+        this.interfaces.displayTimeList(this.project.getTimestamps());
+        // save to db
+        fbRef.child("/timestamps/").set(this.project.timestamps);
+        fbRef.child("/activeTimer/").set(this.project.activeTimer);
+    }
+
     App.prototype.init = function () {
         // get timelists and elapsed times
+        this.interfaces.toggleTimerButton.disabled = false;
+        this.interfaces.toggleTimerButton.addEventListener("click", this.toggleButton);
         this.interfaces.displaySums(this.project.getSums()); // => Interfaces
         this.interfaces.displayTimeList(this.project.getTimestamps()); // => Interfaces
+        this.startTimer();
     }
 
     App.prototype.startTimer = function () {
@@ -69,21 +111,7 @@
             // update display
     };
 
-    App.prototype.initButton = function () {
 
-            var timestampsByTimers = this.project.getTimestamps(); // a list of all timestamps
-
-            this.project.addTimestamp();
-            this.project.toggleTimers();
-
-            // display
-            this.inetrfaces.displaySums(project.getSums());
-            this.inetrfaces.displayTimeList(project.getTimestamps());
-
-            // save to db
-            fbRef.child("/timestamps/").set(project.timestamps);
-            fbRef.child("/activeTimer/").set(project.activeTimer);
-    }
 
     // Timestamp fc
     var Timestamp = function (timer, date) {
@@ -193,44 +221,10 @@
         // init app
         var app = new App(project, interfaces);
 
-        app.startTimer();
 
         app.init();
     })
 
 
-    // the rest of the program shuould be refactored to display data
 
-
-    function convertDate(d) {
-        if (d) {
-            var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            var days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-            var year = d.getFullYear();
-            var month = months[d.getMonth()];
-            var day = days[d.getDay()];
-            var hour = d.getHours();
-            var min = d.getMinutes();
-            var sec = d.getSeconds();
-            if (min < 10) min = "0" + min;
-            if (sec < 10) sec = "0" + sec;
-            //            return day + ' ' + hour + ':' + min + ':' + sec;
-            return day + ", " + hour + ':' + min + ':' + sec;
-        } else {
-            return "0";
-        }
-    }
-
-    //format duration from http://stackoverflow.com/questions/175554/how-to-convert-milliseconds-into-human-readable-form
-    function getDuration(ms) {
-        var seconds = Math.floor((ms / 1000) % 60);
-        var minutes = Math.floor((ms / (1000 * 60)) % 60);
-        var hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
-        var days = Math.floor((ms / (1000 * 60 * 60 * 24)) % 7);
-        var durd = (days > 0) ? days + "d " : "";
-        var durh = (hours > 0) ? hours + "h " : "";
-        var durm = (minutes > 0) ? ((minutes < 10) ? "0" + minutes : minutes) + "min " : "";
-        var durs = (seconds > 0) ? ((seconds < 10) ? "0" + seconds : seconds) + "sec" : "";
-        return durd + durh + durm + durs;
-    }
 })();
