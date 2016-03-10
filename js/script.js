@@ -1,16 +1,57 @@
-(function () {
+(function (App, Project, Interfaces, Timestamp) {
     'use strict'
 
     // Firebase connection
     var fbRef = new Firebase('https://crackling-inferno-3492.firebaseio.com/');
 
-    // DOM elements
+    // DOM elements => interfaces
     var toggleTimerButton = document.getElementById("toggle-timer-button");
     var liDisplays = [document.getElementById("time-0"), document.getElementById("time-1")];
     var sumDisplays = [document.getElementById("sum-0-display"), document.getElementById("sum-1-display")];
 
-    // variables
-    var project = {};
+    // Interfaces fc
+    var Interfaces = function () {
+        //buttons, displays
+    }
+
+    Interfaces.prototype.displaySums = function () {
+        // add from code
+    }
+
+    Interfaces.prototype.displayTimeList = function () {
+        // add from code
+    }
+
+    // App fc
+    var App = function (project, interfaces) {
+        this.project = project;
+        this.interfaces = interfaces;
+        this.timer;
+    }
+
+    App.prototype.init = function () {
+        // get timelists and elapsed times
+        displaySums(this.project.getSums()); // => Interfaces
+        displayTimeList(this.project.getTimestamps()); // => Interfaces
+    }
+
+    App.prototype.startTimer = function () {
+        // get active timer
+        var activeTimer = this.project.activeTimer;
+        // start a set interval, increase timer by t ms
+        this.timer = setInterval(function () {
+            console.log("tick...")
+        }, 1000);
+        // update display
+    };
+
+    App.prototype.stopTimer = function () {
+        // get active timer
+        // start a set interval
+        this.timer = window.clearInterval()
+            // increase timer by t ms
+            // update display
+    };
 
     // Timestamp fc
     var Timestamp = function (timer, date) {
@@ -109,28 +150,21 @@
 
     fbRef.once("value", function (data) {
         if (data.val()) {
-            project = new Project(data.val());
+            var project = new Project(data.val());
             console.log("Project loaded!");
         } else {
             console.log("Project not found, initialized a new project!");
-            project = new Project("myProject");
+            var project = new Project("myProject");
         }
+        // intentiate interfaces
+        var interfaces = new Interfaces();
         // init app
-        init();
+        var app = new App(project, interfaces);
+        
+        app.startTimer();
+        
+        app.init();
     })
-
-    function init() {
-
-        // get timelists and elapsed times
-        displaySums(project.getSums());
-        displayTimeList(project.getTimestamps());
-
-        // add click event listener to button
-        toggleTimerButton.addEventListener('click', toggelButtonListener);
-
-        // enable button
-        toggleTimerButton.disabled = false;
-    }
 
     function toggelButtonListener() {
 
@@ -171,7 +205,7 @@
 
     // helper functions
 
-     function displaySums(sums) {
+    function displaySums(sums) {
         sumDisplays[0].innerHTML = getDuration(sums[0]);
         sumDisplays[1].innerHTML = getDuration(sums[1]);
     }
