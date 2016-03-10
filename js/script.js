@@ -8,6 +8,7 @@
     var Interfaces = function () {
         //buttons, displays
         this.toggleTimerButton = document.getElementById("toggle-timer-button");
+        //        this.stopTimerButton = document.getElementById("stop-timer-button");
         this.liDisplays = [document.getElementById("time-0"), document.getElementById("time-1")];
         this.sumDisplays = [document.getElementById("sum-0-display"), document.getElementById("sum-1-display")];
     }
@@ -66,51 +67,6 @@
 
 
 
-    // App fc
-    var App = function (project, interfaces) {
-        this.project = project;
-        this.interfaces = interfaces;
-        this.timer;
-    }
-
-    App.prototype.toggleButton = function () {
-        this.project.addTimestamp();
-        this.project.toggleTimers();
-        // print times
-        this.interfaces.displaySums(this.project.getSums());
-        this.interfaces.displayTimeList(this.project.getTimestamps());
-        // save to db
-        fbRef.child("/timestamps/").set(this.project.timestamps);
-        fbRef.child("/activeTimer/").set(this.project.activeTimer);
-    }
-
-    App.prototype.init = function () {
-        // get timelists and elapsed times
-        this.interfaces.toggleTimerButton.disabled = false;
-        this.interfaces.toggleTimerButton.addEventListener("click", this.toggleButton);
-        this.interfaces.displaySums(this.project.getSums()); // => Interfaces
-        this.interfaces.displayTimeList(this.project.getTimestamps()); // => Interfaces
-        this.startTimer();
-    }
-
-    App.prototype.startTimer = function () {
-        // get active timer
-        var activeTimer = this.project.activeTimer;
-        // start a set interval, increase timer by t ms
-        this.timer = setInterval(function () {
-            console.log("tick...")
-        }, 1000);
-        // update display
-    };
-
-    App.prototype.stopTimer = function () {
-        // get active timer
-        // start a set interval
-        this.timer = window.clearInterval()
-            // increase timer by t ms
-            // update display
-    };
-
 
 
     // Timestamp fc
@@ -131,14 +87,14 @@
         }
     }
 
-    Project.prototype.addTimestamp = function () { // void
+    Project.prototype.addTimestamp = function () {
         var timerStr = "timer";
         var activeTimer = timerStr + this.activeTimer;
         var newTimestamp = new Timestamp(activeTimer, (this.timestamps[0] > 0) ? this.timestamps[0] : new Date());
         this.timestamps[Object.keys(this.timestamps).length] = newTimestamp;
     }
 
-    Project.prototype.toggleTimers = function () { // void
+    Project.prototype.toggleTimers = function () {
         this.activeTimer = Number(!this.activeTimer);
     }
 
@@ -173,10 +129,11 @@
         return arr;
     }
 
+    Project.prototype.getLastTimestamp = function () {
+        return this.timestamps[Object.keys(this.timestamps).length - 1];
+    }
+
     Project.prototype.getSums = function () { // array of sums
-        //        var arr = [];
-        //        var tmpArr0 = [];
-        //        var tmpArr1 = [];
         var timestamps = this.timestamps;
         var startDate = timestamps["0"];
         var dur0 = 0,
@@ -199,7 +156,6 @@
             startDate = endDate;
             if (timer == "timer0") {
                 dur0 += dur;
-
             } else {
                 dur1 += dur;
             }
@@ -207,6 +163,58 @@
         }
         return [dur0, dur1];
     }
+
+    // App fc
+    var App = function (project, interfaces) {
+        this.project = project;
+        this.interfaces = interfaces;
+        this.timer;
+    }
+
+    App.prototype.toggleButton = function () {
+        this.project.addTimestamp();
+        this.project.toggleTimers();
+        this.stopTimer();
+        this.startTimer();
+        // print times
+        this.interfaces.displaySums(this.project.getSums());
+        this.interfaces.displayTimeList(this.project.getTimestamps());
+        // save to db
+        fbRef.child("/timestamps/").set(this.project.timestamps);
+        fbRef.child("/activeTimer/").set(this.project.activeTimer);
+    }
+
+    App.prototype.init = function () {
+        // get timelists and elapsed times
+        this.interfaces.toggleTimerButton.disabled = false;
+        //        this.interfaces.stopTimerButton.disabled = false;
+        this.interfaces.toggleTimerButton.addEventListener("click", this.toggleButton.bind(this), false);
+        //        this.interfaces.stopTimerButton.addEventListener("click", this.stopTimer.bind(this), false);
+                this.interfaces.displaySums(this.project.getSums()); // => Interfaces
+        this.interfaces.displayTimeList(this.project.getTimestamps()); // => Interfaces
+        this.startTimer();
+    }
+
+    App.prototype.startTimer = function () {
+        var lastTimestamp = this.project.getLastTimestamp();
+        // get active timer
+        var activeTimer = this.project.activeTimer;
+        //console.log(lastTimestamp, activeTimer);
+        // start a set interval, increase timer by t ms
+        this.timer = setInterval(function () {
+            var timeElapsed = new Date() - lastTimestamp.date;
+            var newDuration = this.project.getSums()[activeTimer] + timeElapsed;
+            // update display
+            this.interfaces.sumDisplays[activeTimer].innerHTML = this.interfaces.getDuration(newDuration);
+        }.bind(this), 1000);
+
+        
+    };
+
+    App.prototype.stopTimer = function () {
+        console.log("stop timer")
+        clearInterval(this.timer);
+    };
 
     fbRef.once("value", function (data) {
         if (data.val()) {
@@ -221,10 +229,6 @@
         // init app
         var app = new App(project, interfaces);
 
-
         app.init();
     })
-
-
-
 })();
