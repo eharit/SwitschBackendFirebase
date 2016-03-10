@@ -5,22 +5,38 @@
     var fbRef = new Firebase('https://crackling-inferno-3492.firebaseio.com/');
 
     // DOM elements => interfaces
-    var toggleTimerButton = document.getElementById("toggle-timer-button");
-    var liDisplays = [document.getElementById("time-0"), document.getElementById("time-1")];
-    var sumDisplays = [document.getElementById("sum-0-display"), document.getElementById("sum-1-display")];
+
 
     // Interfaces fc
     var Interfaces = function () {
         //buttons, displays
+        this.toggleTimerButton = document.getElementById("toggle-timer-button");
+        this.liDisplays = [document.getElementById("time-0"), document.getElementById("time-1")];
+        this.sumDisplays = [document.getElementById("sum-0-display"), document.getElementById("sum-1-display")];
     }
 
-    Interfaces.prototype.displaySums = function () {
+    Interfaces.prototype.displaySums = function (arr) {
         // add from code
+        this.sumDisplays[0].innerHTML = getDuration(arr[0]);
+        this.sumDisplays[1].innerHTML = getDuration(arr[1]);
     }
 
-    Interfaces.prototype.displayTimeList = function () {
+    Interfaces.prototype.displayTimeList = function (arr) {
         // add from code
+        var listHTML;
+        var l = arr.length;
+        for (var i = 0; i < l; i++) {
+            listHTML = "";
+            for (var j = 0; j < arr[i].length; j++) {
+                listHTML += "<tr>"
+                listHTML += "<td>" + convertDate(new Date(arr[i][j])) + "</td>";
+                listHTML += "</tr>"
+            }
+            this.liDisplays[i].innerHTML = listHTML;
+        }
     }
+
+
 
     // App fc
     var App = function (project, interfaces) {
@@ -31,8 +47,8 @@
 
     App.prototype.init = function () {
         // get timelists and elapsed times
-        displaySums(this.project.getSums()); // => Interfaces
-        displayTimeList(this.project.getTimestamps()); // => Interfaces
+        this.interfaces.displaySums(this.project.getSums()); // => Interfaces
+        this.interfaces.displayTimeList(this.project.getTimestamps()); // => Interfaces
     }
 
     App.prototype.startTimer = function () {
@@ -52,6 +68,22 @@
             // increase timer by t ms
             // update display
     };
+
+    App.prototype.initButton = function () {
+
+            var timestampsByTimers = this.project.getTimestamps(); // a list of all timestamps
+
+            this.project.addTimestamp();
+            this.project.toggleTimers();
+
+            // display
+            this.inetrfaces.displaySums(project.getSums());
+            this.inetrfaces.displayTimeList(project.getTimestamps());
+
+            // save to db
+            fbRef.child("/timestamps/").set(project.timestamps);
+            fbRef.child("/activeTimer/").set(project.activeTimer);
+    }
 
     // Timestamp fc
     var Timestamp = function (timer, date) {
@@ -160,55 +192,15 @@
         var interfaces = new Interfaces();
         // init app
         var app = new App(project, interfaces);
-        
+
         app.startTimer();
-        
+
         app.init();
     })
 
-    function toggelButtonListener() {
-
-        var timestampsByTimers = project.getTimestamps(); // a list of all timestamps
-
-        project.addTimestamp();
-        project.toggleTimers();
-
-        // display
-        displaySums(project.getSums());
-        displayTimeList(project.getTimestamps());
-
-        // save to db
-        fbRef.child("/timestamps/").set(project.timestamps);
-        fbRef.child("/activeTimer/").set(project.activeTimer);
-    }
 
     // the rest of the program shuould be refactored to display data
 
-    // display functions
-
-    function displayTimeList(arr) {
-        var listHTML;
-        var l = arr.length;
-        for (var i = 0; i < l; i++) {
-            listHTML = "";
-            //console.log(arr[i]);
-
-            for (var j = 0; j < arr[i].length; j++) {
-                listHTML += "<tr>"
-                listHTML += "<td>" + convertDate(new Date(arr[i][j])) + "</td>";
-                listHTML += "</tr>"
-            }
-
-            liDisplays[i].innerHTML = listHTML;
-        }
-    }
-
-    // helper functions
-
-    function displaySums(sums) {
-        sumDisplays[0].innerHTML = getDuration(sums[0]);
-        sumDisplays[1].innerHTML = getDuration(sums[1]);
-    }
 
     function convertDate(d) {
         if (d) {
