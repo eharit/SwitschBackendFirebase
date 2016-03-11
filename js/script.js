@@ -6,11 +6,13 @@
 
     // Interfaces fc
     var Interfaces = function () {
+        this.projectName = document.getElementById("project-name");
         // buttons, displays
         this.toggleTimerButton = document.getElementById("toggle-timer-button");
         // this.stopTimerButton = document.getElementById("stop-timer-button");
         this.liDisplays = [document.getElementById("time-0"), document.getElementById("time-1")];
         this.sumDisplays = [document.getElementById("sum-0-display"), document.getElementById("sum-1-display")];
+        this.timerHeaders = [document.getElementById("timer-name-0"), document.getElementById("timer-name-1")];
     }
 
     Interfaces.prototype.displaySums = function (arr) {
@@ -204,6 +206,10 @@
         this.timer;
     }
 
+    App.prototype.saveToDB = function (url, data) {
+        fbRef.child(url).set(data);
+    }
+
     App.prototype.toggleButton = function () {
         this.project.addTimestamp();
         this.project.toggleTimers();
@@ -213,8 +219,9 @@
         this.interfaces.displaySums(this.project.getSums());
         this.interfaces.displayTimeList(this.project.getDurations(), this.project.getTimestamps());
         // save to db
-        fbRef.child("/timestamps/").set(this.project.timestamps);
-        fbRef.child("/activeTimer/").set(this.project.activeTimer);
+        this.saveToDB("/timestamps/", this.project.timestamps);
+        this.saveToDB("/activeTimer/", this.project.activeTimer);
+        this.saveToDB("/timers/", this.project.timers);
     }
 
     App.prototype.init = function () {
@@ -226,6 +233,22 @@
         this.interfaces.displaySums(this.project.getSums()); // => Interfaces
         this.interfaces.displayTimeList(this.project.getDurations(), this.project.getTimestamps()); // => Interfaces
         this.startTimer();
+        this.interfaces.projectName.innerHTML = this.project.name;
+        this.interfaces.projectName.addEventListener("blur", function () {
+            this.project.name = this.interfaces.projectName.innerHTML;
+            this.saveToDB("/name/", this.project.name);
+        }.bind(this), false)
+        for (var i = 0; i < this.interfaces.timerHeaders.length; i++) {
+            this.interfaces.timerHeaders[i].innerHTML = this.project.timers[i];
+            (function (i) {
+                var timerHeader = this.interfaces.timerHeaders[i]
+                timerHeader.addEventListener("blur", function () {
+                    console.log(timerHeader.innerHTML, this);
+                    this.project.timers[i] = timerHeader.innerHTML;
+                    this.saveToDB("/timers/" + [i], this.project.timers[i]);
+                }.bind(this), false)
+            }).apply(this, [i]);
+        };
     };
 
     App.prototype.startTimer = function () {
@@ -261,4 +284,5 @@
         var app = new App(project, interfaces);
         app.init();
     });
+
 })();
