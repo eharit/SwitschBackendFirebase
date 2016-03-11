@@ -6,38 +6,23 @@
 
     // Interfaces fc
     var Interfaces = function () {
-        //buttons, displays
+        // buttons, displays
         this.toggleTimerButton = document.getElementById("toggle-timer-button");
-        //        this.stopTimerButton = document.getElementById("stop-timer-button");
+        // this.stopTimerButton = document.getElementById("stop-timer-button");
         this.liDisplays = [document.getElementById("time-0"), document.getElementById("time-1")];
         this.sumDisplays = [document.getElementById("sum-0-display"), document.getElementById("sum-1-display")];
     }
 
     Interfaces.prototype.displaySums = function (arr) {
         // add from code
-        this.sumDisplays[0].innerHTML = this.getDuration(arr[0]);
-        this.sumDisplays[1].innerHTML = this.getDuration(arr[1]);
+        this.sumDisplays[0].innerHTML = this.parseDuration(arr[0]);
+        this.sumDisplays[1].innerHTML = this.parseDuration(arr[1]);
     }
 
-    Interfaces.prototype.displayTimeList = function (arr) {
-        // add from code
-        var listHTML;
-        var l = arr.length;
-        for (var i = 0; i < l; i++) {
-            listHTML = "";
-            for (var j = 0; j < arr[i].length; j++) {
-                listHTML += "<tr>"
-                listHTML += "<td>" + this.convertDate(new Date(arr[i][j])) + "</td>";
-                listHTML += "</tr>"
-            }
-            this.liDisplays[i].innerHTML = listHTML;
-        }
-    }
-
-    Interfaces.prototype.convertDate = function (d) {
+    Interfaces.prototype.parseDate = function (d) {
         if (d) {
             var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            var days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+            var days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
             var year = d.getFullYear();
             var month = months[d.getMonth()];
             var day = days[d.getDay()];
@@ -53,27 +38,40 @@
         }
     }
 
-    Interfaces.prototype.getDuration = function (ms) {
+    Interfaces.prototype.parseDuration = function (ms) {
         var seconds = Math.floor((ms / 1000) % 60);
         var minutes = Math.floor((ms / (1000 * 60)) % 60);
         var hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
         var days = Math.floor((ms / (1000 * 60 * 60 * 24)) % 7);
         var durd = (days > 0) ? days + "d " : "";
-        var durh = (hours > 0) ? hours + "h " : "";
-        var durm = (minutes > 0) ? ((minutes < 10) ? "0" + minutes : minutes) + "min " : "";
-        var durs = (seconds > 0) ? ((seconds < 10) ? "0" + seconds : seconds) + "sec" : "";
-        return durd + durh + durm + durs;
-    }
+        var durh = (hours > 0) ? hours + ":" : "";
+        var durm = (minutes > 0) ? ((minutes < 10) ? "0" + minutes : minutes) + ":" : "";
+        var durs = (seconds >= 1) ? ((seconds < 10) ? "0" + seconds : seconds) + "s" : "";
+        var durms = (seconds < 1) ? ((ms < 10) ? "0" + ms : ms) + "ms" : "";
+        return durd + durh + durm + durs + durms;
+    };
 
-
-
-
+    Interfaces.prototype.displayTimeList = function (arr1, arr2) {
+        // add from code
+        var listHTML;
+        var l = arr1.length;
+        for (var i = 0; i < l; i++) {
+            listHTML = "";
+            for (var j = 0; j < arr1[i].length; j++) {
+                listHTML += "<tr>"
+                listHTML += '<td>' + '<span class="tooltipp">' + this.parseDuration(arr1[i][j]);
+                listHTML += '<span class="tooltiptext">' + this.parseDate(new Date(arr2[i][j])) + "</span>" + "</span>" + "</td>";
+                listHTML += "</tr>"
+            }
+            this.liDisplays[i].innerHTML = listHTML;
+        }
+    };
 
     // Timestamp fc
     var Timestamp = function (timer, date) {
         this.date = date.getTime();
         this.timer = timer;
-    }
+    };
 
     // Project fc
     var Project = function (obj) {
@@ -124,16 +122,51 @@
                     tmpArr.unshift(timestamps[ts].date);
                 }
             }
-            arr.push(tmpArr); // enclose each timers' timestamp list into a single array and return
+            arr.push(tmpArr); // enclose each timers' timestamp list into a single array Y
         }
-        return arr;
+        return arr; // and return
     }
 
     Project.prototype.getLastTimestamp = function () {
         return this.timestamps[Object.keys(this.timestamps).length - 1];
     }
 
-    Project.prototype.getSums = function () { // array of sums
+    Project.prototype.getDurations = function () { // array of sums
+        var timestamps = this.timestamps;
+        var startDate = timestamps["0"];
+        var tmpArr0 = [];
+        var tmpArr1 = [];
+        var dur = 0;
+        var dur0 = 0,
+            dur1 = 0,
+            endDate = 0;
+
+        for (var ts in timestamps) {
+            var tmpArr = [];
+            var timer = timestamps[ts].timer;
+
+            if (ts != "0") {
+                endDate = timestamps[ts].date;
+                dur = endDate - startDate;
+                //console.log(dur);
+            } else {
+                endDate = timestamps["0"].date;
+            }
+            startDate = endDate;
+            if (timer == "timer0") {
+                tmpArr0.unshift(dur);
+            } else {
+                tmpArr1.unshift(dur);
+            }
+            //console.log(dur0, dur1)
+        }
+        return [tmpArr0, tmpArr1];
+    }
+
+    Project.prototype.getSums = function () { // arrays of durations
+
+        //get timestamps, calculate elapsed times between each entry, collect to two arrays then
+
         var timestamps = this.timestamps;
         var startDate = timestamps["0"];
         var dur0 = 0,
@@ -178,7 +211,7 @@
         this.startTimer();
         // print times
         this.interfaces.displaySums(this.project.getSums());
-        this.interfaces.displayTimeList(this.project.getTimestamps());
+        this.interfaces.displayTimeList(this.project.getDurations(), this.project.getTimestamps());
         // save to db
         fbRef.child("/timestamps/").set(this.project.timestamps);
         fbRef.child("/activeTimer/").set(this.project.activeTimer);
@@ -187,13 +220,13 @@
     App.prototype.init = function () {
         // get timelists and elapsed times
         this.interfaces.toggleTimerButton.disabled = false;
-        //        this.interfaces.stopTimerButton.disabled = false;
+        // this.interfaces.stopTimerButton.disabled = false;
         this.interfaces.toggleTimerButton.addEventListener("click", this.toggleButton.bind(this), false);
-        //        this.interfaces.stopTimerButton.addEventListener("click", this.stopTimer.bind(this), false);
-                this.interfaces.displaySums(this.project.getSums()); // => Interfaces
-        this.interfaces.displayTimeList(this.project.getTimestamps()); // => Interfaces
+        // this.interfaces.stopTimerButton.addEventListener("click", this.stopTimer.bind(this), false);
+        this.interfaces.displaySums(this.project.getSums()); // => Interfaces
+        this.interfaces.displayTimeList(this.project.getDurations(), this.project.getTimestamps()); // => Interfaces
         this.startTimer();
-    }
+    };
 
     App.prototype.startTimer = function () {
         var lastTimestamp = this.project.getLastTimestamp();
@@ -205,10 +238,8 @@
             var timeElapsed = new Date() - lastTimestamp.date;
             var newDuration = this.project.getSums()[activeTimer] + timeElapsed;
             // update display
-            this.interfaces.sumDisplays[activeTimer].innerHTML = this.interfaces.getDuration(newDuration);
+            this.interfaces.sumDisplays[activeTimer].innerHTML = this.interfaces.parseDuration(newDuration);
         }.bind(this), 1000);
-
-        
     };
 
     App.prototype.stopTimer = function () {
@@ -228,7 +259,6 @@
         var interfaces = new Interfaces();
         // init app
         var app = new App(project, interfaces);
-
         app.init();
-    })
+    });
 })();

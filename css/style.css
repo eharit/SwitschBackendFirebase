@@ -5,3 +5,48 @@
 .panel table {
     color: lightsteelblue;
 }
+
+.tooltipp {
+    position: relative;
+    display: block;
+}
+
+/* Tooltip text */
+.tooltipp .tooltiptext {
+    width: auto;
+    min-width: 120px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+ 
+    /* Position the tooltip text - see examples below! */
+    position: absolute;
+    z-index: 1;
+    width: 120px;
+    bottom: 100%;
+    left: 50%; 
+    margin-left: -60px;
+}
+
+.tooltipp .tooltiptext::after {
+    content: " ";
+    position: absolute;
+    top: 100%; /* At the bottom of the tooltip */
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: black transparent transparent transparent;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltipp .tooltiptext {
+    opacity: 0;
+    transition: opacity .25s;
+}
+
+.tooltipp:hover .tooltiptext {
+    opacity: 1;
+}
