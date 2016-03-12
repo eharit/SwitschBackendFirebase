@@ -2,7 +2,7 @@
     'use strict'
 
     // Firebase connection
-    var fbRef = new Firebase('https://crackling-inferno-3492.firebaseio.com/');
+    var ref = new Firebase('https://crackling-inferno-3492.firebaseio.com/');
 
     // Interfaces fc
     var Interfaces = function () {
@@ -80,7 +80,7 @@
         this.id = obj.id || null; // number
         this.name = obj.name || "New project"; // string
         this.timestamps = obj.timestamps || {}; // object
-        this.activeTimer = obj.activeTimer || 1; // number
+        this.activeTimer = obj.activeTimer || 0; // number
         this.timers = obj.timers || { // object
             0: "0", // object
             1: "1" // object
@@ -116,7 +116,7 @@
         var lastTimer = this.lastTimer;
         var timestamps = this.timestamps;
         var timers = this.timers;
-        
+
         for (var tm in timers) {
             tmpArr = [];
             for (var ts in timestamps) {
@@ -208,7 +208,7 @@
     }
 
     App.prototype.saveToDB = function (url, data) {
-        fbRef.child(url).set(data);
+        ref.child(url).set(data);
     }
 
     App.prototype.toggleButton = function () {
@@ -224,10 +224,10 @@
         this.saveToDB("/activeTimer/", this.project.activeTimer);
         // this.saveToDB("/timers/", this.project.timers);
     }
-    
+
     App.prototype.resetButton = function () {
         this.stopTimer();
-        this.project.activeTimer = 1;
+        this.project.activeTimer = 0;
         this.project.timestamps = {};
         // print times
         this.interfaces.displaySums(this.project.getSums());
@@ -272,12 +272,13 @@
         var activeTimer = this.project.activeTimer;
         // start a set interval, increase timer by 1 s every 1000 ms
         if (lastTimestamp)
-        this.timer = setInterval(function () {
-            var timeElapsed = new Date() - lastTimestamp.date;
-            var newDuration = this.project.getSums()[activeTimer] + timeElapsed;
-            // update display
-            this.interfaces.sumDisplays[activeTimer].innerHTML = this.interfaces.parseDuration(newDuration);
-        }.bind(this), 1000);
+            this.timer = setInterval(function () {
+                var timeElapsed = new Date() - lastTimestamp.date;
+                var newDuration = this.project.getSums()[activeTimer] + timeElapsed;
+                // update display
+                this.interfaces.sumDisplays[activeTimer].innerHTML = this.interfaces.parseDuration(newDuration);
+                //console.log(this.project.activeTimer)
+            }.bind(this), 1000);
     };
 
     App.prototype.stopTimer = function () {
@@ -285,19 +286,36 @@
         clearInterval(this.timer);
     };
 
-    fbRef.once("value", function (data) {
-        if (data.val()) {
-            var project = new Project(data.val());
-            console.log("Project loaded!");
+    // Or with an email/password combination
+    ref.authWithPassword({
+        email: 'eharit@gmail.com',
+        password: 'TayJQcePeSUCaQd2'
+    }, authHandler);
+
+    // Create a callback to handle the result of the authentication
+
+    function authHandler(error, authData) {
+        if (error) {
+            console.log("Login Failed!", error);
         } else {
-            console.log("Project not found, initialized a new project!");
-            var project = new Project("myProject");
+            console.log("Authenticated successfully with payload:", authData);
+            
+            ref.once("value", function (data) {
+                if (data.val()) {
+                    var project = new Project(data.val());
+                    console.log("Project loaded!");
+                } else {
+                    console.log("Project not found, initialized a new project!");
+                    var project = new Project("myProject");
+                }
+                // intentiate interfaces
+                var interfaces = new Interfaces();
+                // init app
+                var app = new App(project, interfaces);
+                app.init();
+            });
         }
-        // intentiate interfaces
-        var interfaces = new Interfaces();
-        // init app
-        var app = new App(project, interfaces);
-        app.init();
-    });
+    }
+
 
 })();
