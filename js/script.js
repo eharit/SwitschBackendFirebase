@@ -9,7 +9,7 @@
         this.projectName = document.getElementById("project-name");
         // buttons, displays
         this.toggleTimerButton = document.getElementById("toggle-timer-button");
-        // this.stopTimerButton = document.getElementById("stop-timer-button");
+        this.resetTimerButton = document.getElementById("reset-timer-button");
         this.liDisplays = [document.getElementById("time-0"), document.getElementById("time-1")];
         this.sumDisplays = [document.getElementById("sum-0-display"), document.getElementById("sum-1-display")];
         this.timerHeaders = [document.getElementById("timer-name-0"), document.getElementById("timer-name-1")];
@@ -46,11 +46,11 @@
         var hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
         var days = Math.floor((ms / (1000 * 60 * 60 * 24)) % 7);
         var durd = (days > 0) ? days + "d " : "";
-        var durh = (hours > 0) ? hours + ":" : "";
-        var durm = (minutes > 0) ? ((minutes < 10) ? "0" + minutes : minutes) + ":" : "";
-        var durs = (seconds >= 1) ? ((seconds < 10) ? "0" + seconds : seconds) + "s" : "";
-        var durms = (seconds < 1) ? ((ms < 10) ? "0" + ms : ms) + "ms" : "";
-        return durd + durh + durm + durs + durms;
+        var durh = (hours > 0) ? ((hours < 10) ? "0" + hours : hours) + ":" : "00:";
+        var durm = (minutes > 0) ? ((minutes < 10) ? "0" + minutes : minutes) + ":" : "00:";
+        var durs = (seconds >= 1) ? ((seconds < 10) ? "0" + seconds : seconds) + "" : "00";
+        var durms = (seconds < 1 && minutes < 1 && hours < 1 && days < 1) ? ((ms < 10) ? "0" + ms : ms) + " ms" : "";
+        return (!durms) ? durd + durh + durm + durs : durms;
     };
 
     Interfaces.prototype.displayTimeList = function (arr1, arr2) {
@@ -80,16 +80,15 @@
         this.id = obj.id || null; // number
         this.name = obj.name || "New project"; // string
         this.timestamps = obj.timestamps || {}; // object
-        this.activeTimer = obj.activeTimer || 0; // number
+        this.activeTimer = obj.activeTimer || 1; // number
         this.timers = obj.timers || { // object
-            0: "timer0", // object
-            1: "timer1" // object
+            0: "0", // object
+            1: "1" // object
         }
     }
 
     Project.prototype.addTimestamp = function () {
-        var timerStr = "timer";
-        var activeTimer = timerStr + this.activeTimer;
+        var activeTimer = this.activeTimer;
         var newTimestamp = new Timestamp(activeTimer, (this.timestamps[0] > 0) ? this.timestamps[0] : new Date());
         this.timestamps[Object.keys(this.timestamps).length] = newTimestamp;
     }
@@ -117,10 +116,12 @@
         var lastTimer = this.lastTimer;
         var timestamps = this.timestamps;
         var timers = this.timers;
+        
         for (var tm in timers) {
             tmpArr = [];
             for (var ts in timestamps) {
-                if (timers[tm] == timestamps[ts].timer) {
+                console.log();
+                if (tm == timestamps[ts].timer) {
                     tmpArr.unshift(timestamps[ts].date);
                 }
             }
@@ -155,7 +156,7 @@
                 endDate = timestamps["0"].date;
             }
             startDate = endDate;
-            if (timer == "timer0") {
+            if (timer == "0") {
                 tmpArr0.unshift(dur);
             } else {
                 tmpArr1.unshift(dur);
@@ -189,7 +190,7 @@
                 //console.log(dur);
             }
             startDate = endDate;
-            if (timer == "timer0") {
+            if (timer == "0") {
                 dur0 += dur;
             } else {
                 dur1 += dur;
@@ -212,8 +213,8 @@
 
     App.prototype.toggleButton = function () {
         this.project.addTimestamp();
-        this.project.toggleTimers();
         this.stopTimer();
+        this.project.toggleTimers();
         this.startTimer();
         // print times
         this.interfaces.displaySums(this.project.getSums());
@@ -221,14 +222,28 @@
         // save to db
         this.saveToDB("/timestamps/", this.project.timestamps);
         this.saveToDB("/activeTimer/", this.project.activeTimer);
-        this.saveToDB("/timers/", this.project.timers);
+        // this.saveToDB("/timers/", this.project.timers);
+    }
+    
+    App.prototype.resetButton = function () {
+        this.stopTimer();
+        this.project.activeTimer = 1;
+        this.project.timestamps = {};
+        // print times
+        this.interfaces.displaySums(this.project.getSums());
+        this.interfaces.displayTimeList(this.project.getDurations(), this.project.getTimestamps());
+        // save to db
+        this.saveToDB("/timestamps/", this.project.timestamps);
+        this.saveToDB("/activeTimer/", this.project.activeTimer);
+        // this.saveToDB("/timers/", this.project.timers);
     }
 
     App.prototype.init = function () {
         // get timelists and elapsed times
         this.interfaces.toggleTimerButton.disabled = false;
-        // this.interfaces.stopTimerButton.disabled = false;
+        this.interfaces.resetTimerButton.disabled = false;
         this.interfaces.toggleTimerButton.addEventListener("click", this.toggleButton.bind(this), false);
+        this.interfaces.resetTimerButton.addEventListener("click", this.resetButton.bind(this), false);
         // this.interfaces.stopTimerButton.addEventListener("click", this.stopTimer.bind(this), false);
         this.interfaces.displaySums(this.project.getSums()); // => Interfaces
         this.interfaces.displayTimeList(this.project.getDurations(), this.project.getTimestamps()); // => Interfaces
@@ -237,7 +252,7 @@
         this.interfaces.projectName.addEventListener("blur", function () {
             this.project.name = this.interfaces.projectName.innerHTML;
             this.saveToDB("/name/", this.project.name);
-        }.bind(this), false)
+        }.bind(this), false);
         for (var i = 0; i < this.interfaces.timerHeaders.length; i++) {
             this.interfaces.timerHeaders[i].innerHTML = this.project.timers[i];
             (function (i) {
@@ -255,8 +270,8 @@
         var lastTimestamp = this.project.getLastTimestamp();
         // get active timer
         var activeTimer = this.project.activeTimer;
-        //console.log(lastTimestamp, activeTimer);
-        // start a set interval, increase timer by t ms
+        // start a set interval, increase timer by 1 s every 1000 ms
+        if (lastTimestamp)
         this.timer = setInterval(function () {
             var timeElapsed = new Date() - lastTimestamp.date;
             var newDuration = this.project.getSums()[activeTimer] + timeElapsed;
