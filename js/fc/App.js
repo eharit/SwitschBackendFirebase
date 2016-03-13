@@ -37,21 +37,42 @@ App.prototype.resetButton = function () {
     // this.saveToDB("/timers/", this.project.timers);
 }
 
+App.prototype.logout = function () {
+    console.log("logout called");
+    this.interfaces.loginForm.setAttribute("style", "display: inline-block");
+    this.interfaces.timerButtons.setAttribute("style", "display: none");
+    this.interfaces.logoutButton.setAttribute("style", "display: none");
+    this.ref.unauth();
+    window.localStorage.username = "";
+    window.localStorage.password = "";
+    location.reload();
+}
+
 App.prototype.init = function () {
     // get timelists and elapsed times
     this.interfaces.toggleTimerButton.disabled = false;
     this.interfaces.resetTimerButton.disabled = false;
+
+    this.interfaces.timerButtons.setAttribute("style", "display: inline-block");
+    this.interfaces.logoutButton.setAttribute("style", "display: inline-block");
+    this.interfaces.loginForm.setAttribute("style", "display: none");
+
     this.interfaces.toggleTimerButton.addEventListener("click", this.toggleButton.bind(this), false);
     this.interfaces.resetTimerButton.addEventListener("click", this.resetButton.bind(this), false);
-    // this.interfaces.stopTimerButton.addEventListener("click", this.stopTimer.bind(this), false);
-    this.interfaces.displaySums(this.project.getSums()); // => Interfaces
-    this.interfaces.displayTimeList(this.project.getDurations(), this.project.getTimestamps()); // => Interfaces
+    this.interfaces.logoutButton.addEventListener("click", this.logout.bind(this), false);
+    //    this.interfaces.loginButton.addEventListener("click", this.login.bind(this), false);
+
+    this.interfaces.displaySums(this.project.getSums()); // 
+    this.interfaces.displayTimeList(this.project.getDurations(), this.project.getTimestamps()); // 
+
     this.startTimer();
+
     this.interfaces.projectName.innerHTML = this.project.name;
     this.interfaces.projectName.addEventListener("blur", function () {
         this.project.name = this.interfaces.projectName.innerHTML;
         this.saveToDB("/name/", this.project.name);
     }.bind(this), false);
+
     for (var i = 0; i < this.interfaces.timerHeaders.length; i++) {
         this.interfaces.timerHeaders[i].innerHTML = this.project.timers[i];
         (function (i) {

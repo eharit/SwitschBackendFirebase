@@ -4,6 +4,12 @@ var Interfaces = function () {
     // buttons, displays
     this.toggleTimerButton = document.getElementById("toggle-timer-button");
     this.resetTimerButton = document.getElementById("reset-timer-button");
+    this.logoutButton = document.getElementById("logout-button");
+    this.loginButton = document.getElementById("login-button");
+    this.loginForm = document.getElementById("login-form");
+    this.timerButtons = document.getElementById("timer-buttons");
+    this.usernameInput = document.getElementById("username");
+    this.passwordInput = document.getElementById("password");
     this.liDisplays = [document.getElementById("time-0"), document.getElementById("time-1")];
     this.sumDisplays = [document.getElementById("sum-0-display"), document.getElementById("sum-1-display")];
     this.timerHeaders = [document.getElementById("timer-name-0"), document.getElementById("timer-name-1")];
